@@ -1,80 +1,43 @@
 # wkanno
 
-`wkanno` is a standalone Python CLI for downloading WebKnossos annotation metadata,
-the matching raw image patch, and aligned label volumes for local evaluation workflows.
+`wkanno` is a Python CLI for downloading WebKnossos annotation metadata, aligned raw patches, label volumes, binary masks, and valid masks.
 
-It exists to make a validated lab workflow easy to reuse without depending on the
-current `webknossos` Python client, which can fail against servers exposing older API
-versions.
+It uses the direct WebKnossos REST flow that works against older server API versions.
 
-## What It Does
-
-- Inspects an annotation through the WebKnossos REST API.
-- Downloads the full annotation archive.
-- Extracts the annotation volume archive locally.
-- Downloads the matching raw patch from the linked dataset.
-- Reconstructs aligned label, binary, and valid-mask arrays.
-- Optionally exports local `.npy` volumes to NIfTI for viewers such as Niivue.
-
-## Installation
-
-### Recommended: install as a CLI tool
+## Install
 
 ```bash
-pipx install /path/to/wkanno
+python3 -m pip install --user pipx
+~/.local/bin/pipx ensurepath
 ```
 
-After the repository is published, the same flow becomes:
+Open a new shell, or run:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Then install `wkanno` from GitHub:
 
 ```bash
 pipx install git+https://github.com/gaiborjosue/wkanno.git
 ```
 
-If `pipx` is not available, use a dedicated environment:
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install /path/to/wkanno
-```
-
-## Authentication
-
-Set your WebKnossos token in the environment:
+## Authenticate
 
 ```bash
 export WEBKNOSSOS_TOKEN=your_token_here
 ```
-
-You can also pass `--token` explicitly to any command.
-
-## Typical User Flow
-
-For most users, the end-to-end workflow is:
-
-```bash
-export WEBKNOSSOS_TOKEN=your_token_here
-wkanno list-boxes 6982650e010000a3019f7143
-wkanno fetch-box 6982650e010000a3019f7143 'WM 2' --output-dir ./wkanno_out --export-nifti
-```
-
-That is enough to:
-
-- discover the available annotator-defined box names
-- download the linked annotation archive
-- fetch the matching raw patch from the dataset
-- reconstruct aligned labels, binary mask, and valid mask
-- export viewer-friendly NIfTI volumes when requested
 
 ## Quick Start
 
-List the available named boxes first:
+List the available boxes in an annotation:
 
 ```bash
 wkanno list-boxes 6982650e010000a3019f7143
 ```
 
-Then fetch one specific box exactly by name:
+Fetch one box by name:
 
 ```bash
 wkanno fetch-box 6982650e010000a3019f7143 'WM 2' \
@@ -82,87 +45,70 @@ wkanno fetch-box 6982650e010000a3019f7143 'WM 2' \
   --export-nifti
 ```
 
-Fetch everything needed for a named user bounding box:
-
-```bash
-wkanno fetch-box 696148730100001001be9620 WM \
-  --output-dir ./wkanno_out \
-  --export-nifti
-```
-
-This writes:
-
-- `annotation_<id>/...` with the summary JSON and annotation archive
-- `<annotation>_<box>.npy` for the raw patch
-- `<annotation>_<box>_labels.npy`
-- `<annotation>_<box>_binary.npy`
-- `<annotation>_<box>_valid_mask.npy`
-- optional NIfTI exports under `nifti/`
-
-## Command Overview
+## Main Commands
 
 Inspect an annotation:
 
 ```bash
-wkanno inspect 696148730100001001be9620 --download full --extract --output-dir ./annotation_bundle
+wkanno inspect 6982650e010000a3019f7143 --download metadata --output-dir ./inspect_out
 ```
 
-List the available box names in a user-friendly format:
+Fetch a full box workflow:
 
 ```bash
-wkanno list-boxes 6982650e010000a3019f7143
+wkanno fetch-box 6982650e010000a3019f7143 'White-Gray Transition' \
+  --output-dir ./wkanno_out \
+  --export-nifti
 ```
 
-This is the easiest way to discover names like `WM 1`, `WM 2`, or
-`White-Gray Transition` before calling `fetch-box`.
-
-Download a raw patch for one named box from an existing summary JSON:
+Download only the raw patch from an existing summary:
 
 ```bash
 wkanno download-raw \
-  --annotation-summary ./annotation_bundle/696148730100001001be9620_summary.json \
-  --box-name WM \
-  --output ./macaque_NEFH_WM.npy
+  --annotation-summary ./inspect_out/6982650e010000a3019f7143_summary.json \
+  --box-name 'WM 1' \
+  --output ./macaque_PV_WM_1.npy
 ```
 
-Extract aligned label products from an extracted annotation archive and patch metadata:
+Extract only labels from an extracted annotation bundle:
 
 ```bash
 wkanno extract-labels \
-  --annotation-dir ./annotation_bundle \
-  --patch-meta ./macaque_NEFH_WM.npy.meta.json \
-  --box-name WM \
-  --output-prefix ./macaque_NEFH_WM
+  --annotation-dir ./annotation_6982650e010000a3019f7143 \
+  --patch-meta ./macaque_PV_WM_1.npy.meta.json \
+  --box-name 'WM 1' \
+  --output-prefix ./macaque_PV_WM_1
 ```
 
 Export `.npy` arrays to NIfTI:
 
 ```bash
 wkanno export-nifti \
-  --inputs ./macaque_NEFH_WM.npy ./macaque_NEFH_WM_binary.npy \
+  --inputs ./macaque_PV_WM_1.npy ./macaque_PV_WM_1_binary.npy \
   --output-dir ./nifti \
   --voxel-size 1.0 \
   --spatial-unit unknown
 ```
 
-## Scientific Notes
+## Notes
 
 - `mag=1-1-1` means native resolution level, not a physical voxel spacing.
-- If a bounding box extends outside the dataset bounds, the raw patch is clipped and
-  reinserted into the requested output shape with padding. The same clipping and
-  reinsertion are applied to the annotation volume so raw data and labels remain
-  voxel-aligned.
-- `valid_mask` marks which voxels came from real downloaded data versus padding.
-- The default NIfTI spatial unit is `unknown` unless you choose otherwise.
-
-## Publishing Notes
-
-- Choose and add a real license before making the repository public.
-- Consider tagging the first public release only after one more live end-to-end test on a fresh annotation.
+- If a box extends outside dataset bounds, `wkanno` clips the download and pads it back into the requested shape.
+- The same clipping and reinsertion are applied to the annotation volume so raw data and labels stay voxel-aligned.
+- `valid_mask` marks voxels that came from real downloaded data rather than padding.
+- NIfTI spatial units default to `unknown` unless you set them explicitly.
 
 ## Development
 
-Run the unit tests with the source tree on `PYTHONPATH`:
+Install locally for development:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .[dev]
+```
+
+Run tests:
 
 ```bash
 PYTHONPATH=src python -m unittest discover -s tests
