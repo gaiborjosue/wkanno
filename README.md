@@ -25,6 +25,8 @@ pipx install git+https://github.com/gaiborjosue/wkanno.git
 
 ## Authenticate
 
+Get it from: https://webknossos.lincbrain.org/auth/token
+
 ```bash
 export WEBKNOSSOS_TOKEN=your_token_here
 ```
