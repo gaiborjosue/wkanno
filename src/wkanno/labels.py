@@ -7,6 +7,8 @@ from typing import Any
 
 import numpy as np
 
+from wkanno.utils import names_match
+
 
 def _import_wkw() -> Any:
     import wkw
@@ -25,26 +27,40 @@ def load_nml_root(annotation_dir: Path) -> ET.Element:
     return ET.fromstring(nml_files[0].read_text())
 
 
+def _find_unique_named_match(
+    entries: list[ET.Element],
+    target_name: str,
+    entry_kind: str,
+) -> ET.Element | None:
+    matches = [entry for entry in entries if names_match(entry.attrib.get("name"), target_name)]
+    if len(matches) > 1:
+        matched_names = sorted({entry.attrib.get("name", "") for entry in matches})
+        raise ValueError(f"Multiple {entry_kind} matched box name {target_name!r}: {matched_names}")
+    if not matches:
+        return None
+    return matches[0]
+
+
 def resolve_segment_id(root: ET.Element, box_name: str, segment_id: int | None) -> int:
     if segment_id is not None:
         return segment_id
 
     segments = root.findall("./volume/segments/segment")
-    for segment in segments:
-        if segment.attrib.get("name") == box_name:
-            return int(segment.attrib["id"])
+    matched_segment = _find_unique_named_match(segments, box_name, "segments")
+    if matched_segment is not None:
+        return int(matched_segment.attrib["id"])
 
+    boxes = root.findall("./parameters/userBoundingBox")
+    matched_box = _find_unique_named_match(boxes, box_name, "user bounding boxes")
     target_box = None
-    for box in root.findall("./parameters/userBoundingBox"):
-        if box.attrib.get("name") == box_name:
-            x0 = int(box.attrib["topLeftX"])
-            y0 = int(box.attrib["topLeftY"])
-            z0 = int(box.attrib["topLeftZ"])
-            width = int(box.attrib["width"])
-            height = int(box.attrib["height"])
-            depth = int(box.attrib["depth"])
-            target_box = (x0, y0, z0, x0 + width, y0 + height, z0 + depth)
-            break
+    if matched_box is not None:
+        x0 = int(matched_box.attrib["topLeftX"])
+        y0 = int(matched_box.attrib["topLeftY"])
+        z0 = int(matched_box.attrib["topLeftZ"])
+        width = int(matched_box.attrib["width"])
+        height = int(matched_box.attrib["height"])
+        depth = int(matched_box.attrib["depth"])
+        target_box = (x0, y0, z0, x0 + width, y0 + height, z0 + depth)
 
     if target_box is not None:
         x0, y0, z0, x1, y1, z1 = target_box

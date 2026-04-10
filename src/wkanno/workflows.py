@@ -19,7 +19,7 @@ from wkanno.client import (
 from wkanno.labels import extract_labels
 from wkanno.models import BoundingBox
 from wkanno.nifti import export_numpy_inputs
-from wkanno.utils import ensure_directory, slugify, write_json
+from wkanno.utils import ensure_directory, names_match, slugify, write_json
 
 
 def resolve_token(token: str | None) -> str:
@@ -73,10 +73,6 @@ def inspect_annotation(
     return summary
 
 
-def _normalize_name(value: str | None) -> str:
-    return (value or "").strip().casefold()
-
-
 def _anchor_inside_box(segment: dict[str, Any], box: dict[str, Any]) -> bool:
     anchor = segment.get("anchor_position")
     top_left = box.get("top_left")
@@ -94,10 +90,9 @@ def _anchor_inside_box(segment: dict[str, Any], box: dict[str, Any]) -> bool:
 
 
 def _match_segment_for_box(box: dict[str, Any], segments: list[dict[str, Any]]) -> dict[str, Any] | None:
-    box_name = _normalize_name(box.get("name"))
-    exact_matches = [segment for segment in segments if _normalize_name(segment.get("name")) == box_name]
-    if exact_matches:
-        return exact_matches[0]
+    name_matches = [segment for segment in segments if names_match(segment.get("name"), box.get("name"))]
+    if len(name_matches) == 1:
+        return name_matches[0]
 
     anchor_matches = [segment for segment in segments if _anchor_inside_box(segment, box)]
     if len(anchor_matches) == 1:
@@ -160,9 +155,12 @@ def _load_box_from_summary(summary_path: Path, box_name: str) -> tuple[dict[str,
 
     summary = json.loads(summary_path.read_text())
     boxes = summary["archive"]["nml"]["user_bounding_boxes"]
-    matches = [box for box in boxes if box["name"] == box_name]
+    matches = [box for box in boxes if names_match(box.get("name"), box_name)]
     if not matches:
         raise ValueError(f"No user bounding box named {box_name!r} found in annotation summary")
+    if len(matches) > 1:
+        matched_names = sorted({str(box.get("name", "")) for box in matches})
+        raise ValueError(f"Multiple user bounding boxes matched {box_name!r}: {matched_names}")
     match = matches[0]
     bbox = BoundingBox.from_lists(match["top_left"], match["size"])
     return summary, bbox

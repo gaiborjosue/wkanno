@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- Fixed box and segment matching for annotations whose segment names are prefixed with `Annotations `.
+- Made box-name lookup tolerant of case differences and pasted curly quote characters from chat apps.
+- Added regression tests covering the live `WM 2` and `GM 1` matching failures.
+
 ## 0.1.0
 
 - Initial public CLI scaffold for WebKnossos annotation workflows.
