@@ -3,8 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from wkanno import __version__
 from wkanno.archive import extract_annotation_archive_from_path
@@ -53,23 +53,36 @@ def build_parser() -> argparse.ArgumentParser:
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    inspect_parser = subparsers.add_parser("inspect", help="Inspect an annotation and optionally download its archive")
+    inspect_parser = subparsers.add_parser(
+        "inspect",
+        help="Inspect an annotation and optionally download its archive",
+    )
     inspect_parser.add_argument("annotation_id")
     inspect_parser.add_argument("--token", default=None)
     inspect_parser.add_argument("--url", default=DEFAULT_BASE_URL)
-    inspect_parser.add_argument("--download", choices=["none", "metadata", "full"], default="metadata")
+    inspect_parser.add_argument(
+        "--download",
+        choices=["none", "metadata", "full"],
+        default="metadata",
+    )
     inspect_parser.add_argument("--volume-format", choices=["wkw", "zarr3"], default="wkw")
     inspect_parser.add_argument("--output-dir", type=Path, default=None)
     inspect_parser.add_argument("--extract", action="store_true")
 
-    list_parser = subparsers.add_parser("list-boxes", help="List the named user bounding boxes inside an annotation")
+    list_parser = subparsers.add_parser(
+        "list-boxes",
+        help="List the named user bounding boxes inside an annotation",
+    )
     list_parser.add_argument("annotation_id")
     list_parser.add_argument("--token", default=None)
     list_parser.add_argument("--url", default=DEFAULT_BASE_URL)
     list_parser.add_argument("--output-dir", type=Path, default=None)
     list_parser.add_argument("--json", action="store_true")
 
-    raw_parser = subparsers.add_parser("download-raw", help="Download a raw patch for a named user box")
+    raw_parser = subparsers.add_parser(
+        "download-raw",
+        help="Download a raw patch for a named user box",
+    )
     raw_parser.add_argument("--annotation-summary", type=Path, required=True)
     raw_parser.add_argument("--box-name", required=True)
     raw_parser.add_argument("--output", type=Path, required=True)
@@ -79,7 +92,10 @@ def build_parser() -> argparse.ArgumentParser:
     raw_parser.add_argument("--mag", default="1-1-1")
     raw_parser.add_argument("--padding-value", type=float, default=0.0)
 
-    labels_parser = subparsers.add_parser("extract-labels", help="Extract aligned label arrays from an extracted annotation bundle")
+    labels_parser = subparsers.add_parser(
+        "extract-labels",
+        help="Extract aligned label arrays from an extracted annotation bundle",
+    )
     labels_parser.add_argument("--annotation-dir", type=Path, required=True)
     labels_parser.add_argument("--patch-meta", type=Path, required=True)
     labels_parser.add_argument("--box-name", required=True)
@@ -96,11 +112,17 @@ def build_parser() -> argparse.ArgumentParser:
         default="unknown",
     )
 
-    extract_parser = subparsers.add_parser("extract-archive", help="Extract a downloaded annotation archive in place")
+    extract_parser = subparsers.add_parser(
+        "extract-archive",
+        help="Extract a downloaded annotation archive in place",
+    )
     extract_parser.add_argument("--archive", type=Path, required=True)
     extract_parser.add_argument("--output-dir", type=Path, required=True)
 
-    fetch_parser = subparsers.add_parser("fetch-box", help="Run the full workflow for a named annotation box")
+    fetch_parser = subparsers.add_parser(
+        "fetch-box",
+        help="Run the full workflow for a named annotation box",
+    )
     fetch_parser.add_argument("annotation_id")
     fetch_parser.add_argument("box_name")
     fetch_parser.add_argument("--output-dir", type=Path, required=True)

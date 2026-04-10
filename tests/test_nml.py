@@ -2,7 +2,6 @@ import unittest
 
 from wkanno.nml import parse_nml_text
 
-
 SAMPLE_NML = """
 <things>
   <parameters>
@@ -10,11 +9,26 @@ SAMPLE_NML = """
     <scale x="1.0" y="1.0" z="1.0" unit="nanometer" />
     <editPosition x="0" y="1" z="2" />
     <zoomLevel zoom="0.5" />
-    <userBoundingBox id="4" name="WM" topLeftX="-2" topLeftY="919" topLeftZ="2645" width="114" height="250" depth="250" />
+    <userBoundingBox
+      id="4"
+      name="WM"
+      topLeftX="-2"
+      topLeftY="919"
+      topLeftZ="2645"
+      width="114"
+      height="250"
+      depth="250"
+    />
   </parameters>
   <volume>
     <segments>
-      <segment id="10" name="WM" anchorPositionX="42" anchorPositionY="1144" anchorPositionZ="2811" />
+      <segment
+        id="10"
+        name="WM"
+        anchorPositionX="42"
+        anchorPositionY="1144"
+        anchorPositionZ="2811"
+      />
     </segments>
   </volume>
 </things>

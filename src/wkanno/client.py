@@ -31,7 +31,12 @@ ELEMENT_CLASS_TO_DTYPE = {
 
 
 class WebKnossosClient:
-    def __init__(self, token: str, base_url: str = DEFAULT_BASE_URL, api_version: int = API_VERSION):
+    def __init__(
+        self,
+        token: str,
+        base_url: str = DEFAULT_BASE_URL,
+        api_version: int = API_VERSION,
+    ):
         self.base_url = base_url.rstrip("/")
         self.api_version = api_version
         self.session = requests.Session()

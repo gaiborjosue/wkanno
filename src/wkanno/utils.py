@@ -3,9 +3,9 @@ from __future__ import annotations
 import json
 import re
 import unicodedata
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
-
 
 _QUOTE_CHARS = "\"'`“”‘’"
 _NAME_PREFIXES = ("annotations ", "annotation ")
@@ -31,7 +31,7 @@ def lookup_name_variants(value: str | None) -> set[str]:
         return set()
 
     variants = {normalized}
-    for prefix in _NAME_PREFIXES:
+    for prefix in _iter_name_prefixes():
         if normalized.startswith(prefix):
             stripped = normalized.removeprefix(prefix).strip()
             if stripped:
@@ -59,3 +59,7 @@ def write_json(path: Path, payload: Any) -> None:
 def ensure_directory(path: Path) -> Path:
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def _iter_name_prefixes() -> Iterable[str]:
+    return _NAME_PREFIXES

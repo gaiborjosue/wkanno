@@ -5,7 +5,6 @@ from pathlib import Path
 
 from wkanno.workflows import _load_box_from_summary, summarize_annotation_boxes
 
-
 LIVE_SUMMARY = {
     "annotation_id": "6982650e010000a3019f7143",
     "name": "macaque_PV",

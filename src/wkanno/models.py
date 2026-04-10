@@ -10,7 +10,7 @@ class BoundingBox:
     size: tuple[int, int, int]
 
     @classmethod
-    def from_lists(cls, top_left: list[int], size: list[int]) -> "BoundingBox":
+    def from_lists(cls, top_left: list[int], size: list[int]) -> BoundingBox:
         return cls(tuple(top_left), tuple(size))
 
     def to_dict(self) -> dict[str, list[int]]:

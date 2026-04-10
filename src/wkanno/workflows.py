@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
-from wkanno.archive import extract_annotation_archive, extract_annotation_archive_from_path
+from wkanno.archive import extract_annotation_archive
 from wkanno.client import (
     DEFAULT_BASE_URL,
     ELEMENT_CLASS_TO_DTYPE,
@@ -89,8 +90,15 @@ def _anchor_inside_box(segment: dict[str, Any], box: dict[str, Any]) -> bool:
     return x0 <= anchor_x < x1 and y0 <= anchor_y < y1 and z0 <= anchor_z < z1
 
 
-def _match_segment_for_box(box: dict[str, Any], segments: list[dict[str, Any]]) -> dict[str, Any] | None:
-    name_matches = [segment for segment in segments if names_match(segment.get("name"), box.get("name"))]
+def _match_segment_for_box(
+    box: dict[str, Any],
+    segments: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    name_matches = [
+        segment
+        for segment in segments
+        if names_match(segment.get("name"), box.get("name"))
+    ]
     if len(name_matches) == 1:
         return name_matches[0]
 
@@ -151,8 +159,6 @@ def list_annotation_boxes(
 
 
 def _load_box_from_summary(summary_path: Path, box_name: str) -> tuple[dict[str, Any], BoundingBox]:
-    import json
-
     summary = json.loads(summary_path.read_text())
     boxes = summary["archive"]["nml"]["user_bounding_boxes"]
     matches = [box for box in boxes if names_match(box.get("name"), box_name)]
